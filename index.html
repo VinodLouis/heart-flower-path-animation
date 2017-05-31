@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<title>D3 Heart Flower path animation</title>
+	<meta charset="utf-8">
+<meta name="description" content="Heart and Flower path animation in D3.js.">
+	<style>
+		body{
+		}
+
+               .btn-click{
+                    color: #666666;
+    background: #e5e5e5;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+               }
+
+		.cont{
+			padding: 25px;
+		}
+
+		.sub{
+			vertical-align: super;
+			font-size: 50%;
+		}
+
+		.font-t{
+			font-family: 'Tangerine', serif;
+		}
+
+		.font-r{
+			font-family: "Roboto", sans-serif;
+		}
+
+		#chart,#chart1,.red-bg,body{
+			background-color:#ffb8c9; 
+		}
+
+		.white-font{
+			color: #000000;
+		}
+
+		chart{
+			display: block;
+			margin-left:auto; 
+			margin-right: auto;
+			fill:#ffb8c9;
+		}
+		
+		text {
+			text-anchor: middle;
+			fill: #666666;
+			font-size: 28px;
+			/*font-weight: 700;*/
+			opacity: 0.9;
+		}
+
+		path{
+			stroke: #ff392e;
+			stroke-width: 1;
+			fill: none;
+			opacity: 0.4;
+		}
+
+		.circle-outer {
+			fill: #ff392e;
+			opacity: 0.9;
+		}
+
+		.alignleft {
+    float: left;
+}
+.alignright {
+    float: right;
+}
+	</style>
+	
+	<script src="scripts/d3.v3.min.js"></script>
+	<script src="scripts/jquery.min.js"></script>
+		
+	</head>
+
+	<body>
+			<h1 style="text-align: center"> Heart & Flower in D3.js path animations</h1>
+		<div id="chart"></div>
+		<div class="cont font-r">
+			<h1 style="text-align: center;">Now time for some flowers !,</h1>
+			<h4 style="text-align: center;">Just picked up this interesting equation and transformed it in to path animation similar concept but with new equation.
+			</h4>
+			
+
+			<div class='heart-wrapper' style="text-align: center;">
+				So This is how the Equation goes : where &theta; from 0 to 2&pi;
+				<div>&nbsp;&nbsp;&nbsp;&nbsp; x = cos<b>k</b>&theta;cos&theta;</div>
+				<div>&nbsp;&nbsp;&nbsp;&nbsp; y = cos<b>k</b>&theta;sin&theta;</div>
+			</div>
+			<p style="text-align: center;">
+				Notable value is <code>K</code> because 'K' is again boken down to K = <sup>n</sup>&frasl;<sub>d</sub>. So, here is chart which demostrates you the types of shapes that may appear with corresponding values of 'n' and 'd' which you will select from the dropDowns later on.
+			</p>
+			<div style="width: 452px;margin: auto;">
+				<img src="image/flower.png">
+			</div>
+		</div>
+		<div id="chart1"></div>
+		<br/>
+		<div id="textbox">
+        <p class="alignleft"><small>Source code available at <a href="https://github.com/VinodLouis/heart-flower-path-animation" target="blank">Github</a></small></p>
+        <p class="alignright"><small>Created with <span style="color:red">&#9829;</span> by <a href="http://www.vinodlouis.in" target="blank">Vinod Louis.</a></small></p>
+      </div>
+      <div style="clear:both"></div>
+      <div> <small> Inspired By <a href="http://bl.ocks.org/nbremer/df7f87361bb7e297e751" target="blank">nbremer</a></small></div>
+<div>
+		
+
+		<script type="text/javascript">
+			var k;	
+			var x, x1, y, y1;
+			var data = [];
+			var dataR = [];
+			var heartBtn = `<div class='heart-wrapper'>
+								<p><input class="btn-click" type='button' value='CLICK HERE TO START >>' onclick='drawHeart()'></p>
+								<div>Equation of Heart : where &theta; from 0 to 2&pi; </div>
+								<div>&nbsp;&nbsp;&nbsp;&nbsp; x = sin<span class='sub'>3</span>&theta;</div>
+								<div>&nbsp;&nbsp;&nbsp;&nbsp; y = cos&theta; - 5cos2&theta; - 2cos3&theta; - cos4&theta;</div>
+							</div>`;
+
+			var flowerBtn = `<div>
+								<p>Select <code>n</code> : <select onchange="setK()" id="nVal" placeholder="select n"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> , Select <code>d</code> : <select onchange="setK()" id="dVal" placeholder="select 'd'"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></p>
+									<p>Select the values on n & d and hit START</p>
+									<p><input class="btn-click" type='button' value='CLICK HERE TO START >>' onclick='drawFlower()'></p>
+									<div>&nbsp;&nbsp;&nbsp;&nbsp; x = cos<b class="kval">k</b>&theta;cos&theta;</div>
+									<div>&nbsp;&nbsp;&nbsp;&nbsp; y = cos<b class="kval">k</b>&theta;sin&theta;</div>
+
+							</div>`;				
+			window.onerror = function() {
+				location.reload();
+			}
+
+			//Vinod++ 12022016
+			function fnToggleHeart(){
+				//will hide/show heart
+				$("#tHeart").toggle();
+			}
+
+			//Vinod++ 12022016
+			function fnToggleFlower(){
+				//will hide/show flower
+				$("#tFlower").toggle();
+			}
+
+			//Vinod++ 12022016 => callback handling for transition end tracking each
+			function endall(transition, callback) { 
+			    if (transition.size() === 0) { callback() }
+			    var n = 0; 
+			    transition 
+			        .each(function() { ++n; }) 
+			        .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
+			} 
+
+			function setK(){
+				var n = $("#nVal").val();
+				var d = $("#dVal").val();
+
+				$(".kval").html("<sup>"+ n + "</sup>&frasl;<sub>" + d + "</sub>");
+				k = n/d;
+			}
+
+
+			function drawHeart(){
+				//Initiate the SVG
+				$("#tHeart").remove();
+				$(".circle-outer").remove();
+				
+
+
+				var line = d3.svg.line()
+					  .interpolate('linear')
+					  .x(function(d){ return xScale(d[0]) })
+					  .y(function(d){ return yScale(d[1]) });
+					  
+				var path = svg.append("g").append("path")
+					.attr("id","tHeart")
+					.attr("d", line(data.reverse()));
+					  
+				var totalLength = path.node().getTotalLength();	  
+				path
+				  .attr("stroke-dasharray", totalLength + " " + totalLength)
+				  .attr("stroke-dashoffset", totalLength)
+				  .transition()
+					.duration(5e4).delay(500)
+					.ease("linear")
+					.attr("stroke-dashoffset", 0)
+					.call(endall,function(){
+						//Create the dots that make the heart
+						var dotsL = setInterval(function() {
+						svg.append("g").selectAll("circle")
+						  .data(data)
+						  .enter().append("circle")
+						  	.attr("class","circle-outer")
+							.attr("cx", width/2)
+							.attr("cy", height/2)
+							.attr("r", 0.1)
+						  	.transition()	
+						  	.ease("linear")
+						  	.duration(3000)
+						  	.delay(500)
+							.attr("cx", function (d,i) { return xScaleV(d[0]); } )
+							.attr("cy", function (d) { return yScaleV(d[1]); } )
+							.attr("r", 2)
+							.remove();
+						},1200);
+					});	
+			}
+
+			function drawFlower(){
+				//Initiate the SVG
+				setK();
+				$("#tFlower").remove();
+				
+				//Create the datapoints with x en y positions for the circles 
+				//Formula from http://mathworld.wolfram.com/HeartCurve.html
+				
+				for (var i = 0; i < 361; i++) {
+					x1 = 16 * Math.cos(k*i) * Math.cos(i);
+					y1 = 13 * Math.cos(k*i) * Math.sin(i);
+					dataR[i] = [x1,y1];
+				}//for i
+
+				//Create and draw the path that connects the dots
+				//http://stackoverflow.com/questions/13893127/how-to-draw-a-path-smoothly-from-start-point-to-end-point-in-d3-js
+
+				var lineR = d3.svg.line()
+						  .interpolate('linear')
+						  .x(function(d){ return xScale(d[0]) })
+						  .y(function(d){ return yScale(d[1]) });
+						  
+				var path = svgF.append("g").append("path")
+					.attr("id","tFlower")
+					.attr("d", lineR(dataR));
+					  
+				var totalLength = path.node().getTotalLength();	  
+				path
+				  .attr("stroke-dasharray", totalLength + " " + totalLength)
+				  .attr("stroke-dashoffset", totalLength)
+				  .transition()
+					.duration(5e4).delay(500) //5e4
+					.ease("linear")
+					.attr("stroke-dashoffset", 0)	
+			}
+			
+			var margin = {top: 10, right: 10, bottom: 10, left: 10},
+				docHeight = $(window).height() - margin.left - margin.right,
+				docWidth  = $(window).width() - margin.top - margin.bottom;
+			
+			var	minSize = Math.min(600,(docWidth-40),(docHeight-40)),
+				width = minSize,
+				height = minSize;
+
+
+			 
+			//Create the datapoints with x en y positions for the circles 
+			//Formula from http://mathworld.wolfram.com/HeartCurve.html
+			var x, x1, y, y1;
+			var data = [];
+			var dataR = [];
+			for (var i = 0; i < 361; i++) {
+				x = 16 * Math.pow(Math.sin(i),3);
+				y = 13 * Math.cos(i) - 5* Math.cos(2*i) - 2 * Math.cos(3*i) - Math.cos(4*i)
+				data[i] = [x,y];
+
+				x1 = 16 * Math.cos(k*i) * Math.cos(i);
+				y1 = 13 * Math.cos(k*i) * Math.sin(i);
+				dataR[i] = [x1,y1];
+			}//for i
+
+			//Scales
+			var xScale = d3.scale.linear()
+					  .domain([d3.min(data, function(d) { return d[0]; }), d3.max(data, function(d) { return d[0]; })])
+					  .range([ 0, width ]);
+
+			var yScale = d3.scale.linear()
+					  .domain([d3.min(data, function(d) { return d[1]; }), d3.max(data, function(d) { return d[1]; })])
+					  .range([ height, 0 ]);
+
+			var xScaleV = d3.scale.linear()
+					  .domain([d3.min(data, function(d) { return d[0]; }), d3.max(data, function(d) { return d[0]; })])
+					  .range([ 0, width/3 ]);
+
+			var yScaleV = d3.scale.linear()
+					  .domain([d3.min(data, function(d) { return d[1]; }), d3.max(data, function(d) { return d[1]; })])
+					  .range([ height/3, 0 ]);	
+
+
+			var chart = d3.select('#chart')
+					.append('svg')
+					.attr('width', docWidth)
+					.attr('height', docHeight)
+					.attr('class', 'chart')
+					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					
+				//Initiate the group that will hold all the dots and lines
+				var svg = chart.append('g')
+					.attr('transform', 'translate(' + (docWidth/2-width/2) + ',' + (docHeight/2-height/2) + ')')
+					.attr('width', width)
+					.attr('height', height); 	
+
+				var svg1 = chart.append('g')
+					.append("foreignObject")
+					    .attr("width", 500)
+					    .attr("y",0)
+					    .attr("height", 100)
+					  	.append("xhtml:body")
+					    //.style("font", "14px 'Helvetica Neue'")
+					    .html(heartBtn);
+
+
+			var chart1 = d3.select('#chart1')
+					.append('svg')
+					.attr('width', docWidth)
+					.attr('height', docHeight)
+					.attr('class', 'chart')
+					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					
+				//Initiate the group that will hold all the dots and lines
+				var svgF = chart1.append('g')
+					.attr('transform', 'translate(' + (docWidth/2-width/2) + ',' + (docHeight/2-height/2) + ')')
+					.attr('width', width)
+					.attr('height', height);		    
+
+				var svgF1 = chart1.append('g')
+					.append("foreignObject")
+					    .attr("width", 500)
+					    .attr("y",0)
+					    .attr("height", 100)
+					  	.append("xhtml:body")
+					    //.style("font", "14px 'Helvetica Neue'")
+					    .html(flowerBtn);	
+			//drawHeart();		  
+			//drawFlower();		  
+	</script>
+  </body>
+</html>		
